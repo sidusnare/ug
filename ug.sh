@@ -3,18 +3,17 @@
 ################################################################################
 #UG the UGly script to Upgrade Gentoo
 ###
-#This is not a good script to upgrade Gentoo quickly or properly
+#This is not a good script to upgrade gentoo quickly or properly
 #This is a script to run in a for look a few (10-20) times while your not planning on using your computer for a few days, perhaps you have something better to do with your weekend than Gentoo
 #The idea is to clear all use, keyword, and distfile issues with `emereg -u --deep --newuse -v --tree world -p` and then run ug a few times, maybe go to work/school for the day.
 #Then you come home, sort out what its choked on and run it a few more times.
 #rinse, later, repeat
 ###
-#This may also be a good general guideline for someone who hasn't upgraded Gentoo before, but can read my horrible bash scripting, as the order of operations and general content of upgrading Gentoo.
+#This may also be a good general guideline for someone who hasnt upgraded gentoo before, but can read my hortrible bash scripting, as the order of operations and general content of upgrading gentoo.
 ###
-#This program takes no arguments and is to be run as root, perhaps in /root/, or some other nice place you don't mind me making some files.
+#This program takes no arguments and is to be run as root, perhaps in /root/, or some other nice place you dont mind me making some files.
 ###
 #Requirements:
-#dev-util/lafilefixer
 #app-portage/gentoolkit
 #sys-devel/gcc-config
 #app-admin/python-updater
@@ -34,6 +33,15 @@ function reld {
 }
 [ -d /var/log/ug ] || mkdir -p /var/log/ug
 
+if [ -z "$TMP" ]; then
+	if [ -d /tmp ]; then
+		export TMP=/tmp
+	else
+		echo Unable to find TMP 1>&2
+		exit 1
+	fi
+fi
+
 ##########
 #Build list
 ##########
@@ -46,12 +54,28 @@ while [ -e "$pkglist" ]; do
 	pkglist="$TMP"/"$RANDOM""$RANDOM"
 done
 
+emerge --sync
+
+#
+#Start off with simple run, like "normal"
+#
+emerge --deep --newuse -u world
+emerge --deep --newuse world
+emerge --deep -u world
+emerge --newuse -u world
+emerge --deep --newuse -u world
+
+
 echo "Searching for packages to upgrade"
+#Upgrade world
 EMERGE_DEFAULT_OPTS="--autounmask=y" /usr/bin/emerge -u --nospin --deep --newuse -v --color n world -p --columns | grep -v ^$ | grep '^\[' | cut -c  18- | awk '{print($1)}' > $pkglist 2>> /dev/null
+#preserved-rebuild
+EMERGE_DEFAULT_OPTS="--autounmask=y" /usr/bin/emerge @preserved-rebuild -u --nospin  -v --color n  -p --columns | grep -v ^$ | grep '^\[' | cut -c  18- | awk '{print($1)}' >> $pkglist 2>> /dev/null
 echo "There are `wc -l $pkglist` packages to upgrade"
 
-cat /var/lib/portage/world >> $pkglist
-echo "There are `wc -l /var/lib/portage/world` packages in world"
+#This is a bit much
+#cat /var/lib/portage/world >> $pkglist
+#echo "There are `wc -l /var/lib/portage/world` packages in world"
 
 #Need another temporary file, take care not to step on toes
 tmp2="$TMP"/"$RANDOM"
@@ -64,7 +88,7 @@ cat $pkglist | sort -u > $tmp2
 cat $tmp2 > $pkglist
 
 echo "There are `wc -l ug.good` packages that have already been upgraded"
-#remove sucsesfully upgrades atoms from list, remember we dumped world into the list.
+#remove sucsesfully upgrades atoms from list
 for x in `cat ug.good`;do
 	cat $pkglist | grep -v ^$x$ > $tmp2
 	cat $tmp2 > $pkglist
@@ -79,13 +103,13 @@ echo "There are `wc -l $pkglist` total packages to do upgrade runs for"
 #Upgrade pass
 ##########
 
-#Loop ofer the list
+#Loop over the list
 for x in `cat $pkglist`; do 
 	echo -e "\n\n\t\tEmergeing $x for upgrade run\n"
 	#for the log files
 	ln=`echo $x | tr '/' '_'`
 	#Upgrade it, first pass with --deep --newuse
-	emerge --deep --newuse -u $x 2>> /var/log/ug/$ln.err.log >> /var/log/ug/$ln.log 
+	timeout 30m emerge --deep --newuse -u $x 2>> /var/log/ug/$ln.err.log >> /var/log/ug/$ln.log 
 	ret=$?
 	if [ "$ret" -lt 1 ];then
 		echo "sucsess in deep $x with $ret"
@@ -160,11 +184,25 @@ echo -e "\n\n\tRunning python updater:\n"
 
 ##########
 #la file fixer
+#Deprecated
 ##########
 #This might not be needed anymore, but whatever.
-echo -e "\n\n\tRunning lafilefixer:\n"
-	lafilefixer --justfixit >> /var/log/ug/la.log 2>> /var/log/ug/la.err.log
-	reld
+#echo -e "\n\n\tRunning lafilefixer:\n"
+#	lafilefixer --justfixit >> /var/log/ug/la.log 2>> /var/log/ug/la.err.log
+#	reld
+
+
+#rebuild packages using upgraded libs
+emerge @preserved-rebuild
+
+
+##########
+#Make sure we have base packages
+##########
+for x in `cat /home/fred4/Documents/Tech/Package\ Lists/gentoo/base`;do
+	echo -e "\n\n\t\tEmerging $x for Package Lists:\n"
+	emerge -n $x
+done
 
 reld
 rm $tmp2 $pkglist
