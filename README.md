@@ -21,9 +21,9 @@ This program takes no arguments and is to be run as root, perhaps in /root/, or 
 
 Requirements
 ===
-*app-portage/gentoolkit
-*sys-devel/gcc-config
-*app-admin/python-updater
-*app-admin/perl-cleaner
+-app-portage/gentoolkit
+-sys-devel/gcc-config
+-app-admin/python-updater
+-app-admin/perl-cleaner
 
 
