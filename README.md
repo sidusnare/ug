@@ -7,7 +7,7 @@ UG the UGly script to Upgrade Gentoo
 Intro
 ===
 This is not a good script to upgrade Gentoo quickly or properly.
-This is a script to run in a for look a few (10-20) times while your not planning on using your computer for a few days, perhaps you have something better to do with your weekend than Gentoo.
+This is a script to run in a for loop a few (10-20) times while your not planning on using your computer for a few days, perhaps you have something better to do with your weekend than Gentoo.
 Method
 ===
 The idea is to clear all use, keyword, and distfile issues with `emereg -u --deep --newuse -v --tree world -p` and then run ug a few times, maybe go to work/school for the day.
@@ -21,10 +21,9 @@ This program takes no arguments and is to be run as root, perhaps in /root/, or 
 
 Requirements
 ===
-dev-util/lafilefixer
-app-portage/gentoolkit
-sys-devel/gcc-config
-app-admin/python-updater
-app-admin/perl-cleaner
+*app-portage/gentoolkit
+*sys-devel/gcc-config
+*app-admin/python-updater
+*app-admin/perl-cleaner
 
 
