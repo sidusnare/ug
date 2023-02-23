@@ -1,0 +1,43 @@
+#!/bin/bash
+
+declare -A errors
+declare -i sucsess=0
+if ! command -v eix-update; then
+	echo "Installing app-portage/eix" 
+	if ! emerge app-portage/eix; then
+		if ! emerge --nodeps app-portage/eix; then
+			echo "Failure installing app-portage/eix, sorry."
+			/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to install app-portage/eix."
+			exit 1
+		fi
+	fi
+fi
+if ! emerge --sync; then
+	echo "Failure syncing"
+	/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to sync."
+	exit 1
+fi
+if ! eix-update; then
+	echo "Failure updating eix"
+	/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to update eix."
+	exit 1
+fi
+if ! emerge --deep --newuse -v --with-bdeps=y --changed-use -u --backtrack=60 --keep-going=y @world; then
+	for pkg in $( EIX_LIMIT=0 eix '-I*' -u --only-names --stable | sort -R );do
+		echo -e "\nUpgrading ${pkg}"
+		if emerge -u -1 --quiet-fail --quiet --nospinner --keep-going=y "${pkg}"; then
+			sucsess=$(( sucsess + 1 ))
+		else
+			errors["$pkg"]="${?}"
+		fi
+	done
+	emerge --deep --newuse -v --with-bdeps=y --changed-use -u --backtrack=60 --keep-going=y @world
+fi
+
+emerge @preserved-rebuild || errors[preserved-rebuild]="${?}"
+
+echo -e "\nErrors:"
+for key in "${!errors[@]}"; do
+	echo -e "\t${key}:\t${errors["$key"]}"
+done
+/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Quick updates done, Sucsesses: ${sucsess}, Failures: ${#errors[@]}, failed packages: ${!errors[*]}"

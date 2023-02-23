@@ -1,12 +1,9 @@
 ug
 ==
 
-UG the UGly script to Upgrade Gentoo
+QUG the Quick UGly script to Upgrade Gentoo
 
-
-Parts
-===
-There are two scripts, ug.sh and lug.sh. lug is the Lightweight version of ug. I run ug once weekly and lug daily.
+ug and lug are deprecated. qug is now my prefered mthod.
 
 Intro
 ===
@@ -35,3 +32,4 @@ Requirements
 - app-admin/python-updater
 - app-admin/perl-cleaner
 - sys-apps/grep
+- app-portage/eix
