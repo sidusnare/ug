@@ -1,5 +1,7 @@
 #!/bin/bash
 
+matrix_root='!your_own_matrix:server.org'
+
 declare -A errors
 declare -i sucsess=0
 if ! command -v eix-update; then
@@ -7,19 +9,19 @@ if ! command -v eix-update; then
 	if ! emerge app-portage/eix; then
 		if ! emerge --nodeps app-portage/eix; then
 			echo "Failure installing app-portage/eix, sorry."
-			/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to install app-portage/eix."
+			/usr/local/bin/matrix.sh --send "--room=${matrix_root}" "$( hostname ): Unable to install app-portage/eix."
 			exit 1
 		fi
 	fi
 fi
 if ! emerge --sync; then
 	echo "Failure syncing"
-	/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to sync."
+	/usr/local/bin/matrix.sh --send "--room=${matrix_root}" "$( hostname ): Unable to sync."
 	exit 1
 fi
 if ! eix-update; then
 	echo "Failure updating eix"
-	/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Unable to update eix."
+	/usr/local/bin/matrix.sh --send "--room=!${matrix_root}" "$( hostname ): Unable to update eix."
 	exit 1
 fi
 if ! emerge --deep --newuse -v --with-bdeps=y --changed-use -u --backtrack=60 --keep-going=y @world; then
@@ -40,4 +42,4 @@ echo -e "\nErrors:"
 for key in "${!errors[@]}"; do
 	echo -e "\t${key}:\t${errors["$key"]}"
 done
-/usr/local/bin/matrix.sh --send '--room=!rWFUoHkRZvHIdOEsft:chat.fred.social' "$( hostname ): Quick updates done, Sucsesses: ${sucsess}, Failures: ${#errors[@]}, failed packages: ${!errors[*]}"
+/usr/local/bin/matrix.sh --send "--room=${matrix_root}" "$( hostname ): Quick updates done, Sucsesses: ${sucsess}, Failures: ${#errors[@]}, failed packages: ${!errors[*]}"
